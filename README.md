@@ -4,17 +4,9 @@ A collection of circular gauges.  Each one extends a Swing JComponent.  No other
 
 ## Getting Started
 
-Install using Maven.  Add to your pom.xml file:
-
-<dependency>
-	<groupId>com.github.kkieffer</groupId>
-    <artifactId>jCircularGauges</artifactId>
-    <version>1.0-SNAPSHOT</version>
-</dependency>
+Build and Run using Maven
 
 ### Prerequisites
-
-Just Java
 
 ```
 Just Java
@@ -24,7 +16,7 @@ Just Java
 ## Demo
 
 Demo classes are available in the test package
-
+![Demo Screenshot](https://github.com/kkieffer/jCircularGauges/blob/master/example.jpg "Demo Screenshot")
 
 ## License
 
