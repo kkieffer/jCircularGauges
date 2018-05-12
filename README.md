@@ -1,10 +1,10 @@
 # JCircularGauges
 
-A collection of circular gauges.  Each one extends a Swing JComponent.  No other dependencies. 
+A collection of circular gauges.  Each one extends a Swing JComponent. 
 
 ## Gauge Types
 
-Read the header comments in each class for details.
+Read the header comments in each class for details on how to use and customize.
 
 ## Artificial Horizon
 Also known as an attitude gauge / gyro horizon.  These are typically seen in aircraft.
@@ -18,11 +18,13 @@ The compass shows course and bearing needles.  The compass can rotate or can be 
 
 ## Getting Started
 
-Build and Run using Maven
+Build and Run using Maven:  "mvn package"
+Navigate to the "target" directory
 
-### Prerequisites
+Run: java -cp classes:test-classes com.github.kkieffer.jcirculargauges.JCompassDemo 
+Run: java -cp classes:test-classes com.github.kkieffer.jcirculargauges.JArtificialHorizonDemo
 
-Only the Java JRE.  No other packages required
+Only the Java JRE 1.8 is required.  No other dependencies are needed.
 
 ## Demo
 
