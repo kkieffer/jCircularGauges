@@ -63,7 +63,8 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     private double translateFactor;
     private Color groundColor;
     private Color skyColor;
-    
+    private Color indicatorColor;
+
     /**
      * Create the JArtificialHorizon gauge with default parameters
      */
@@ -73,23 +74,25 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     
     /**
      * Create the JArtificialHorizon gauge with default parameters
-     * @param pitchSensitivity the pitch sensitivity, where 1.0 cooresponds to 45 degrees pitch at half the radius of the gauge
+     * @param pitchSensitivity the pitch sensitivity, where 1.0 corresponds to 45 degrees pitch at half the radius of the gauge
      */
     public JArtificialHorizonGauge(double pitchSensitivity) {
         this.pitchSensitivity = pitchSensitivity;
         setAttitude(0.0, 0.0);
-        setColors(null, null, null);
+        setColors(null, null, null, null);
     }
     
     
     /**
      * Customize the gauge colors
+     * @param indicatorColor colors of ticks and labels
      * @param bezelColor the gauge color, null for default
      * @param groundColor the ground color, null for default
      * @param skyColor the sky color, null for default
      */
-    public final void setColors(Color bezelColor, Color groundColor, Color skyColor) {
+    public final void setColors(Color indicatorColor, Color bezelColor, Color groundColor, Color skyColor) {
         super.setColors(bezelColor, null);
+        this.indicatorColor = indicatorColor == null ? Color.BLACK : indicatorColor;
         this.groundColor = groundColor == null ? BROWN : groundColor;
         this.skyColor = skyColor == null ? BLUE : skyColor;
     }
@@ -173,7 +176,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
             g2d.fillPolygon(p);
 
 
-            g2d.setColor(Color.BLACK);
+            g2d.setColor(indicatorColor);
 
             //Draw dashed perspective lines from the horizon to the origin
             g2d.setStroke(new BasicStroke(1, CAP_SQUARE, JOIN_MITER, 10.0f, new float[]{5.0f}, 0.0f));
@@ -203,7 +206,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
 
          
         //Draw the pitch lines and labels      
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(indicatorColor);
         int y;
         for (int i=-30; i<=30; i+= 5) {
             if (i==0)

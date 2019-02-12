@@ -39,7 +39,7 @@ public class JArtificialHorizonDemo {
         
         
         JArtificialHorizonGauge ah = new JArtificialHorizonGauge(1.5);  //slightly more pitch sensitivity
-        ah.setColors(new Color(0, 50, 200), Color.green, null);  //try some custom colors
+        ah.setColors(Color.WHITE, new Color(0, 50, 200), new Color(100, 45, 30), new Color(0, 0, 100));  //try some custom colors
         
 	thePane.add(ah);
 

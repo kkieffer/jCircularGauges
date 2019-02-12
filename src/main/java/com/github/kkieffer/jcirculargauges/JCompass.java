@@ -23,10 +23,11 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
 /**
- * This is a typical compass gauge, from 0 to 360 degrees, with 0 = N, 90 = E, etc.  Major ticks with degree labels are drawn at 10 degree increments,
+ * This is a typical compass gauge with numeric readout, from 0 to 360 degrees, with 0 = N, 90 = E, etc.  Major ticks with degree labels are drawn at 10 degree increments,
  * the N,E,W,S indicators are drawn, and minor ticks are drawn every 5 degrees if the compass is sized large enough.  Fonts scale with gauge size.
  * 
  * The primary needle is to show bearing of the vehicle, an optional secondary needle shows the desired course.
@@ -39,10 +40,12 @@ import java.awt.geom.Rectangle2D;
 public class JCompass extends JCircularGauge {
     
    
-    private final boolean northUp;
+    private boolean northUp;
     private double bearing;
     private double course;
     private boolean showCourseNeedle = true;
+    private Color indicatorColor;
+    private Color courseNeedleColor;
     
     /**
      * Create the JCompass gauge 
@@ -50,8 +53,32 @@ public class JCompass extends JCircularGauge {
      */
     public JCompass(boolean northUp) {
         this.northUp = northUp;
+        indicatorColor = Color.BLACK;
+        courseNeedleColor = Color.RED;
     }
 
+    
+    public boolean isNorthUp() {
+        return northUp;
+    }
+    
+    
+    public void setNorthUp(boolean northUp) {
+        this.northUp = northUp;
+    }
+    
+    /**
+     * Set the colors of the gauge
+     * @param indicator the needle and labels, marks.  If null, color is black
+     * @param bezelColor the gauge color, null for default
+     * @param background the gauge background color
+     */
+     public void setColors(Color indicator, Color courseNeedle, Color bezelColor, Color background) {
+        indicatorColor = indicator == null ? Color.BLACK : indicator;
+        courseNeedleColor = courseNeedle == null ? Color.RED : courseNeedle;
+        super.setColors(bezelColor, background);
+    }
+    
     /**
      * Set the direction in degrees of the bearing needle
      * @param b the bearing, from 0-360.  Values outside this range will be modulus 360.
@@ -89,8 +116,7 @@ public class JCompass extends JCircularGauge {
         if (!northUp)
             g2d.rotate(bearing);
 
-        
-        g2d.drawLine(0, 0, 0, radius);
+        g2d.drawLine(0, 0, 0, radius+tickLen/2);
         g2d.fillPolygon(new int[]{0, -tickLen/2, tickLen/2},
                    new int[]{radius, radius+tickLen, radius+tickLen},
                    3);
@@ -103,7 +129,7 @@ public class JCompass extends JCircularGauge {
     
     private void drawCourseNeedle(Graphics2D g2d, int radius, int tickLen) {
        
-        g2d.drawLine(0, 0, 0, radius);
+        g2d.drawLine(0, 0, 0, radius+tickLen/2);
         g2d.fillPolygon(new int[]{0, -tickLen/2, tickLen/2},
                    new int[]{radius, radius+tickLen, radius+tickLen},
                    3);
@@ -121,14 +147,11 @@ public class JCompass extends JCircularGauge {
         
         this.paintGaugeBackground(g2d);
 
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(indicatorColor);
 
-        //Draw Center of dial
-        int r = (int)realInsideRadius/20;
-        g2d.fillOval(-r/2, -r/2, r, r);
-        
-        int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0);
-        int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
+           
+        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0);
+        int tickLength = (int)(realInsideRadius + indicatorRadius);
         
         
         if (!northUp)
@@ -138,9 +161,9 @@ public class JCompass extends JCircularGauge {
         for (int i=0; i<360; i+=5) {
             
             if ((i % 10) == 0) {  //major tick
-                g2d.drawString(String.valueOf(i), 2, rollIndicatorRadius);
+                g2d.drawString(String.valueOf(i), 2, indicatorRadius);
                 
-                int lineStart = rollIndicatorRadius + tickLength; //double for N, W, E, S
+                int lineStart = indicatorRadius + tickLength; //double for N, W, E, S
                 g2d.setStroke(new BasicStroke(4));  //thicker line
                 Font origFont = g2d.getFont();
                 Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
@@ -150,22 +173,22 @@ public class JCompass extends JCircularGauge {
                 switch (i) {
                     case 0:
                         Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds("N", g2d);
-                        g2d.drawString("N", (int)-stringBounds.getCenterX(), rollIndicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        g2d.drawString("N", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
                         break;
                     case 90:
                         stringBounds = g2d.getFontMetrics().getStringBounds("E", g2d);
-                        g2d.drawString("E", (int)-stringBounds.getCenterX(), rollIndicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        g2d.drawString("E", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
                         break;
                     case 180:
                         stringBounds = g2d.getFontMetrics().getStringBounds("S", g2d);
-                        g2d.drawString("S", (int)-stringBounds.getCenterX(), rollIndicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        g2d.drawString("S", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
                         break;
                     case 270:
                         stringBounds = g2d.getFontMetrics().getStringBounds("W", g2d);
-                        g2d.drawString("W", (int)-stringBounds.getCenterX(), rollIndicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        g2d.drawString("W", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
                         break;
                     default:
-                        lineStart = rollIndicatorRadius;
+                        lineStart = indicatorRadius;
                         g2d.setFont(origFont);
                         g2d.setStroke(new BasicStroke(1));  //thicker zero line
                         break;
@@ -177,7 +200,7 @@ public class JCompass extends JCircularGauge {
 
             }
             else if (outsideRadius > 250) //draw minor tick, if large enough
-                g2d.drawLine(0, rollIndicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
+                g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
            
             g2d.rotate(Math.toRadians(5.0));
         }
@@ -185,7 +208,9 @@ public class JCompass extends JCircularGauge {
          if (northUp)
             g2d.rotate(bearing);
         
-        drawBearingNeedle(g2d, rollIndicatorRadius, tickLength);
+        g2d.setStroke(new BasicStroke(2.0f));
+
+        drawBearingNeedle(g2d, indicatorRadius, tickLength);
  
          //Restore to origin
         g2d.setTransform(centerGaugeTransform);
@@ -196,14 +221,34 @@ public class JCompass extends JCircularGauge {
 
             g2d.rotate(course);
 
-            g2d.setColor(Color.RED);
-            drawCourseNeedle(g2d, rollIndicatorRadius*2/3, tickLength);
+            g2d.setColor(courseNeedleColor);
+            drawCourseNeedle(g2d, indicatorRadius*2/3, tickLength);
 
             //Restore to origin
             g2d.setTransform(centerGaugeTransform);
 
         }
 
+        //Paint the value
+        g2d.setColor(indicatorColor);
+        Font origFont = g2d.getFont();
+        Font largeFont = origFont.deriveFont((float)origFont.getSize()*4);
+        g2d.setFont(largeFont);
+        String label = String.valueOf((int)Math.round(Math.toDegrees(bearing)));
+        int fontWidth = g2d.getFontMetrics().stringWidth(label);
+
+        g2d.translate((int)(realInsideRadius/3), (int)(realInsideRadius/3));
+        g2d.drawString(label + "°", -fontWidth, 0);
+         
+        //Restore to origin
+        g2d.setTransform(centerGaugeTransform);
+        
+   
+        //Draw Center of dial
+        double r = realInsideRadius/20;
+        g2d.fill(new Ellipse2D.Double(-r/2, -r/2, r, r));
+   
+        
         //Now paint the bezel
         paintBezel(g2d);
             

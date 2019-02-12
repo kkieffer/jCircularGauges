@@ -55,6 +55,7 @@ public class JCircularGauge extends JComponent {
     /**
      * Customize the gauge colors
      * @param bezelColor the gauge color, null for default
+     * @param background the gauge background color
      */
     public final void setColors(Color bezelColor, Color background) {
         this.bezelColor = bezelColor == null ? Color.DARK_GRAY : bezelColor;

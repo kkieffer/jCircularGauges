@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2018 K. Kieffer
+Copyright (C) 2019 K. Kieffer
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -29,43 +29,40 @@ import javax.swing.SwingUtilities;
  * 
  * @author kkieffer
  */
-public class JCompassDemo {
+public class JSpeedometerDemo {
      
     public static void main(String[] args) throws InterruptedException {
 
-	JFrame myFrame = new JFrame("Compass Demo");
+	JFrame myFrame = new JFrame("Speedometer Demo");
 	
 	Container thePane = myFrame.getContentPane();
         
         
-        JCompass g = new JCompass(false);  //slightly more pitch sensitivity
-        g.setColors(Color.WHITE, Color.YELLOW, null, Color.BLACK);
-        g.setCourse(45);
+        JSpeedometer g = new JSpeedometer(10, "knots");  
+        g.setColors(Color.RED, null, Color.BLACK);
 	thePane.add(g);
 
 	myFrame.pack();
         myFrame.setVisible(true);
         
         
-        //Now, cycle the bearing
+        //Now, cycle the speed
         int b = 0;
         while (true) {
   
-            final double bearing = b;
+            final double spd = b;
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    g.setBearing(bearing);
-                     
-                    if (bearing == 0)
-                        g.setNorthUp(!g.isNorthUp());
+                    g.setSpeed(spd);
                 }
 
             });            
             Thread.sleep(100);
 
             b+=1.0;
-            b = b % 360;
+            if (b > 180)
+                b = 0;
             
         }
  
