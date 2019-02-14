@@ -65,6 +65,7 @@ public class JCompass extends JCircularGauge {
     
     public void setNorthUp(boolean northUp) {
         this.northUp = northUp;
+        repaint();
     }
     
     /**
@@ -109,6 +110,7 @@ public class JCompass extends JCircularGauge {
      */
     public void showCourseNeedle(boolean show) {
         this.showCourseNeedle = show;
+        repaint();
     }
     
 

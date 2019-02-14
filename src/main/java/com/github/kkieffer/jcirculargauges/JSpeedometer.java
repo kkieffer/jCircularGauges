@@ -62,6 +62,7 @@ public class JSpeedometer extends JCircularGauge {
 
     public void setUnit(String unit) {
         this.unit = unit;
+        repaint();
     }
    
      /**

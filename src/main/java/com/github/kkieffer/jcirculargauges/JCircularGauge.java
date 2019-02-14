@@ -60,6 +60,7 @@ public class JCircularGauge extends JComponent {
     public final void setColors(Color bezelColor, Color background) {
         this.bezelColor = bezelColor == null ? Color.DARK_GRAY : bezelColor;
         this.background = background == null ? Color.WHITE : background;
+        repaint();
     }
     
     
@@ -122,7 +123,8 @@ public class JCircularGauge extends JComponent {
         
         //Translate to center of the gauge circle (our new origin 0,0 from here on out)
         origTransform = g2d.getTransform();
-        g2d.translate(outsideRadius, outsideRadius);  
+        Dimension size = this.getSize();
+        g2d.translate(size.width/2, size.height/2);  
                
         centerGaugeTransform = g2d.getTransform();
     }
