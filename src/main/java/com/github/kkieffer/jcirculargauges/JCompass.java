@@ -115,6 +115,10 @@ public class JCompass extends JCircularGauge {
     
 
     private void drawBearingNeedle(Graphics2D g2d, int radius, int tickLen) {
+       
+        if (!Double.isFinite(bearing))
+            return;
+        
         if (!northUp)
             g2d.rotate(bearing);
 
@@ -156,7 +160,7 @@ public class JCompass extends JCircularGauge {
         int tickLength = (int)(realInsideRadius + indicatorRadius);
         
         
-        if (!northUp)
+        if (!northUp && Double.isFinite(bearing))
             g2d.rotate(-bearing);
         
         //Draw the roll indicators and labels
@@ -207,7 +211,7 @@ public class JCompass extends JCircularGauge {
             g2d.rotate(Math.toRadians(5.0));
         }
         
-         if (northUp)
+         if (northUp && Double.isFinite(bearing))
             g2d.rotate(bearing);
         
         g2d.setStroke(new BasicStroke(2.0f));
@@ -217,7 +221,7 @@ public class JCompass extends JCircularGauge {
          //Restore to origin
         g2d.setTransform(centerGaugeTransform);
         
-        if (showCourseNeedle) {
+        if (showCourseNeedle && Double.isFinite(bearing)) {
             if (!northUp)
                 g2d.rotate(-bearing);
 
@@ -236,7 +240,7 @@ public class JCompass extends JCircularGauge {
         Font origFont = g2d.getFont();
         Font largeFont = origFont.deriveFont((float)origFont.getSize()*4);
         g2d.setFont(largeFont);
-        String label = String.valueOf((int)Math.round(Math.toDegrees(bearing)));
+        String label = Double.isFinite(bearing) ? String.valueOf((int)Math.round(Math.toDegrees(bearing))) : "?";
         int fontWidth = g2d.getFontMetrics().stringWidth(label);
 
         g2d.translate((int)(realInsideRadius/3), (int)(realInsideRadius/3));

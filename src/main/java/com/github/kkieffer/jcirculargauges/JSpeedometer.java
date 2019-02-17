@@ -42,11 +42,11 @@ public class JSpeedometer extends JCircularGauge {
     
     private static final int MAJOR_TICKS = 14;
     
-    private final double maxSpeed;
+    private double maxSpeed;
     private String unit;
     private double currentSpeed;
     private Color indicatorColor;
-    private final int tickIncrement;
+    private int tickIncrement;
     
     /**
      * Create the JSpeedometer gauge 
@@ -54,10 +54,19 @@ public class JSpeedometer extends JCircularGauge {
      * @param unit the speed unit label
      */
     public JSpeedometer(int increment, String unit) {
-        maxSpeed = increment * MAJOR_TICKS;
-        this.tickIncrement = increment;
         this.unit = unit;
         indicatorColor = Color.BLACK;
+        setIncrement(increment);
+    }
+    
+    public final void setIncrement(int increment) {
+        maxSpeed = increment * MAJOR_TICKS;
+        this.tickIncrement = increment;
+        repaint();
+    }
+    
+    public int getTickIncrement() {
+        return tickIncrement;
     }
 
     public void setUnit(String unit) {
@@ -80,8 +89,6 @@ public class JSpeedometer extends JCircularGauge {
      * Set the current speed in terms of the units specified
      */
     public final void setSpeed(double spd) {
-        if (spd < 0)
-            spd = 0;
         currentSpeed = spd;
         repaint();
     }
@@ -176,13 +183,16 @@ public class JSpeedometer extends JCircularGauge {
         //Restore to origin
         g2d.setTransform(centerGaugeTransform);
         
-        drawNeedle(g2d, indicatorRadius, tickLength);
+        boolean validSpeed = Double.isFinite(currentSpeed) && currentSpeed >= 0;
+        
+        if (validSpeed)
+            drawNeedle(g2d, indicatorRadius, tickLength);
          
         //Paint the value
         Font origFont = g2d.getFont();
         Font largeFont = origFont.deriveFont((float)origFont.getSize()*4);
         g2d.setFont(largeFont);
-        String label = String.valueOf((int)Math.round(currentSpeed));
+        String label = validSpeed ? String.valueOf((int)Math.round(currentSpeed)) : "?";
         int fontWidth = g2d.getFontMetrics().stringWidth(label);
 
         g2d.translate((int)(realInsideRadius/2), (int)(realInsideRadius/2));
@@ -213,9 +223,9 @@ public class JSpeedometer extends JCircularGauge {
 
         
     }
+
     
     
     
-    
-    
+       
 }
