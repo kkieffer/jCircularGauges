@@ -153,7 +153,10 @@ public class JSegmentGauge extends JComponent {
 
         int step = isHoriz ? segmentWidth + segmentGap : segmentHeight + segmentGap; //the amount of space to move to the next segment (including the gap)
        
-        g2d.setFont(new Font("Arial", Font.PLAIN, (int)(6 + Math.round(isHoriz ? segmentWidth : segmentHeight)/4)));
+        int fontSize = (int)(6 + Math.round(isHoriz ? segmentWidth : segmentHeight)/4);
+        if (fontSize > 18)
+            fontSize = 18;
+        g2d.setFont(new Font("Arial", Font.PLAIN, fontSize));
         
         int x = 0;
         int y = 0;
