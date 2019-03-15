@@ -159,14 +159,23 @@ public class JCompass extends JCircularGauge {
         int indicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0);
         int tickLength = (int)(realInsideRadius + indicatorRadius);
         
-        
+        int majorTickIncrement;
+        if (outsideRadius < 75)
+            majorTickIncrement = 90;
+        else if (outsideRadius < 150)
+            majorTickIncrement = 30;
+        else if (outsideRadius < 200)
+            majorTickIncrement = 15;
+        else
+            majorTickIncrement = 10;
+               
         if (!northUp && Double.isFinite(bearing))
             g2d.rotate(-bearing);
         
-        //Draw the roll indicators and labels
+        //Draw the indicators and labels
         for (int i=0; i<360; i+=5) {
             
-            if ((i % 10) == 0) {  //major tick
+            if ((i % majorTickIncrement) == 0) {  //major tick
                 g2d.drawString(String.valueOf(i), 2, indicatorRadius);
                 
                 int lineStart = indicatorRadius + tickLength; //double for N, W, E, S

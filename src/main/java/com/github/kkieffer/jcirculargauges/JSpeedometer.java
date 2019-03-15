@@ -40,7 +40,7 @@ import java.awt.geom.Path2D;
  */
 public class JSpeedometer extends JCircularGauge {
     
-    private static final int MAJOR_TICKS = 14;
+    private static final int NUM_MAJOR_TICKS = 14;
     
     private double maxSpeed;
     private String unit;
@@ -60,7 +60,7 @@ public class JSpeedometer extends JCircularGauge {
     }
     
     public final void setIncrement(int increment) {
-        maxSpeed = increment * MAJOR_TICKS;
+        maxSpeed = increment * NUM_MAJOR_TICKS;
         this.tickIncrement = increment;
         repaint();
     }
@@ -72,6 +72,10 @@ public class JSpeedometer extends JCircularGauge {
     public void setUnit(String unit) {
         this.unit = unit;
         repaint();
+    }
+    
+    public String getUnit() {
+        return unit;
     }
    
      /**
@@ -140,14 +144,19 @@ public class JSpeedometer extends JCircularGauge {
 
         double speedLabel = 0;        
         int smallTick = 10;
-                
+        
+        int majorTickIncrement = 20;
+        if (outsideRadius < 100)
+            majorTickIncrement = 40;
+        
+        
         //Draw the speed indicators and labels
         for (int i=(int)angle; i<=100; i+=smallTick) {
                         
             
-            if ((i % 20) == 0) {  //major tick
+            if ((i % majorTickIncrement) == 0) {  //major tick
 
-                int lineStart = indicatorRadius + tickLength; //double for N, W, E, S
+                int lineStart = indicatorRadius + tickLength; 
 
                 g2d.setStroke(new BasicStroke(4));  //thicker line
                 Font origFont = g2d.getFont();
