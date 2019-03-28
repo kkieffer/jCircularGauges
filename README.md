@@ -28,8 +28,8 @@ Build and Run using Maven:  "mvn package"
 Navigate to the "target" directory
 
 Run: java -cp classes:test-classes com.github.kkieffer.jcirculargauges.JCompassDemo 
-
 Run: java -cp classes:test-classes com.github.kkieffer.jcirculargauges.JArtificialHorizonDemo
+Run: java -cp classes:test-classes com.github.kkieffer.jcirculargauges.JSpeedometerDemo
 
 Only the Java JRE 1.8 is required.  No other dependencies are needed.
 
