@@ -27,6 +27,7 @@ import java.awt.Paint;
 import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import javax.swing.JComponent;
 
@@ -43,7 +44,10 @@ public class JCircularGauge extends JComponent {
     protected double realInsideRadius;
     private AffineTransform origTransform;
     protected AffineTransform centerGaugeTransform;
+    protected float dialCenterDivider = 20;    
     
+    private float[] dist = {0.0f, 0.89f, 0.9f, 0.95f, 1.0f};  //Bezel gradients, starting at .89 * radius
+
     /**
      * Create the JArtificialHorizon gauge with default parameters
      */
@@ -51,6 +55,9 @@ public class JCircularGauge extends JComponent {
         setColors(null, null);
     }
     
+    protected void setBezelGradients(float[] d) {
+        dist = d;
+    }
     
     /**
      * Customize the gauge colors
@@ -81,8 +88,6 @@ public class JCircularGauge extends JComponent {
     
    
     
-    private final float[] dist = {0.0f, 0.89f, 0.9f, 0.95f, 1.0f};  //Bezel gradients, starting at .89 * radius
-
     //Paint the rim of the gauge (assumes translated to center of dial)    
     protected void paintBezel(Graphics2D g) {
     
@@ -107,13 +112,16 @@ public class JCircularGauge extends JComponent {
         
     }
     
-    
-
+    protected void drawDialCenter(Graphics2D g2d) {
+        //Draw Center of dial
+        double r = realInsideRadius/dialCenterDivider;
+        g2d.fill(new Ellipse2D.Double(-r/2, -r/2, r, r));
+    }
     
     protected void setupForPaint(Graphics2D g) {
          
         outsideRadius = getOutsideRadius();  //absolute outside radius which includes bezel
-        realInsideRadius = outsideRadius * 0.9;   //the actual inside radius of the bezel
+        realInsideRadius = outsideRadius * dist[2];   //the actual inside radius of the bezel
         
      
         Graphics2D g2d = (Graphics2D)g;        

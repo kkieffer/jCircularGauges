@@ -24,7 +24,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 
 /**
@@ -56,6 +55,7 @@ public class JSpeedometer extends JCircularGauge {
     public JSpeedometer(int increment, String unit) {
         this.unit = unit;
         indicatorColor = Color.BLACK;
+        dialCenterDivider = 14;
         setIncrement(increment);
     }
     
@@ -222,9 +222,8 @@ public class JSpeedometer extends JCircularGauge {
         
            
         //Draw Center of dial
-        double r = realInsideRadius/14;
-        g2d.fill(new Ellipse2D.Double(-r/2, -r/2, r, r));
- 
+        drawDialCenter(g2d);
+
         //Now paint the bezel
         paintBezel(g2d);
             

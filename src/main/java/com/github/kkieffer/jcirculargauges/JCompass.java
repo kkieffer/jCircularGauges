@@ -23,7 +23,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
 /**
@@ -46,6 +45,8 @@ public class JCompass extends JCircularGauge {
     private boolean showCourseNeedle = true;
     private Color indicatorColor;
     private Color courseNeedleColor;
+    protected boolean thickerCardinalLine = true;
+    protected double tickScale = 0.1;  //fraction of the inside radius for the length of the tick
     
     /**
      * Create the JCompass gauge 
@@ -55,6 +56,7 @@ public class JCompass extends JCircularGauge {
         this.northUp = northUp;
         indicatorColor = Color.BLACK;
         courseNeedleColor = Color.RED;
+        dialCenterDivider = 20;
     }
 
     
@@ -71,6 +73,7 @@ public class JCompass extends JCircularGauge {
     /**
      * Set the colors of the gauge
      * @param indicator the needle and labels, marks.  If null, color is black
+     * @param courseNeedle color of the course needle. If null, color is red
      * @param bezelColor the gauge color, null for default
      * @param background the gauge background color
      */
@@ -105,6 +108,23 @@ public class JCompass extends JCircularGauge {
     }
     
     /**
+     * Get the bearing in radians
+     * @return 
+     */
+    protected double getBearing() {
+        return bearing;
+    }
+    
+    /**
+     * Get the course in radians
+     * @return 
+     */
+    protected double getCourse() {
+        return course;
+    }
+    
+    
+    /**
      * Show or hide the course needle.  The default is to show.
      * @param show 
      */
@@ -114,7 +134,7 @@ public class JCompass extends JCircularGauge {
     }
     
 
-    private void drawBearingNeedle(Graphics2D g2d, int radius, int tickLen) {
+    protected void drawBearingNeedle(Graphics2D g2d, int radius, int tickLen) {
        
         if (!Double.isFinite(bearing))
             return;
@@ -142,7 +162,24 @@ public class JCompass extends JCircularGauge {
  
     }
    
+    protected void paintValue(Graphics2D g2d) {
+        g2d.setColor(indicatorColor);
+        Font origFont = g2d.getFont();
+        Font largeFont = origFont.deriveFont((float)origFont.getSize()*4);
+        g2d.setFont(largeFont);
+        String label = Double.isFinite(bearing) ? String.valueOf((int)Math.round(Math.toDegrees(bearing))) : "?";
+        int fontWidth = g2d.getFontMetrics().stringWidth(label);
+
+        g2d.translate((int)(realInsideRadius/3), (int)(realInsideRadius/3));
+        g2d.drawString(label + "°", -fontWidth, 0);
+         
+    }
     
+    
+    protected void drawCardinalLetter(Graphics2D g2d, String letter, int yOffset) {
+        Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(letter, g2d);
+        g2d.drawString(letter, (int)-stringBounds.getCenterX(), yOffset + (int)stringBounds.getMaxY());
+    }
     
     @Override
     public void paint(Graphics g) {
@@ -156,7 +193,7 @@ public class JCompass extends JCircularGauge {
         g2d.setColor(indicatorColor);
 
            
-        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0);
+        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);
         int tickLength = (int)(realInsideRadius + indicatorRadius);
         
         int majorTickIncrement;
@@ -178,8 +215,15 @@ public class JCompass extends JCircularGauge {
             if ((i % majorTickIncrement) == 0) {  //major tick
                 g2d.drawString(String.valueOf(i), 2, indicatorRadius);
                 
-                int lineStart = indicatorRadius + tickLength; //double for N, W, E, S
-                g2d.setStroke(new BasicStroke(4));  //thicker line
+                int lineStart;
+                if (thickerCardinalLine) {
+                    lineStart = indicatorRadius + tickLength; //double for N, W, E, S
+                    g2d.setStroke(new BasicStroke(4));  //thicker line
+                }
+                else {
+                    lineStart = indicatorRadius;
+                    g2d.setStroke(new BasicStroke(1));  //normal line
+                }
                 Font origFont = g2d.getFont();
                 Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
                 g2d.setFont(largeFont);
@@ -187,25 +231,21 @@ public class JCompass extends JCircularGauge {
                 
                 switch (i) {
                     case 0:
-                        Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds("N", g2d);
-                        g2d.drawString("N", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength);
                         break;
                     case 90:
-                        stringBounds = g2d.getFontMetrics().getStringBounds("E", g2d);
-                        g2d.drawString("E", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength);
                         break;
                     case 180:
-                        stringBounds = g2d.getFontMetrics().getStringBounds("S", g2d);
-                        g2d.drawString("S", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength);
                         break;
                     case 270:
-                        stringBounds = g2d.getFontMetrics().getStringBounds("W", g2d);
-                        g2d.drawString("W", (int)-stringBounds.getCenterX(), indicatorRadius + 2*tickLength + (int)stringBounds.getMaxY());
+                        drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength);
                         break;
                     default:
                         lineStart = indicatorRadius;
                         g2d.setFont(origFont);
-                        g2d.setStroke(new BasicStroke(1));  //thicker zero line
+                        g2d.setStroke(new BasicStroke(1));  //normal thin line
                         break;
                 }
 
@@ -245,25 +285,15 @@ public class JCompass extends JCircularGauge {
         }
 
         //Paint the value
-        g2d.setColor(indicatorColor);
-        Font origFont = g2d.getFont();
-        Font largeFont = origFont.deriveFont((float)origFont.getSize()*4);
-        g2d.setFont(largeFont);
-        String label = Double.isFinite(bearing) ? String.valueOf((int)Math.round(Math.toDegrees(bearing))) : "?";
-        int fontWidth = g2d.getFontMetrics().stringWidth(label);
-
-        g2d.translate((int)(realInsideRadius/3), (int)(realInsideRadius/3));
-        g2d.drawString(label + "°", -fontWidth, 0);
-         
+        paintValue(g2d);
+        
         //Restore to origin
         g2d.setTransform(centerGaugeTransform);
         
    
         //Draw Center of dial
-        double r = realInsideRadius/20;
-        g2d.fill(new Ellipse2D.Double(-r/2, -r/2, r, r));
-   
-        
+        drawDialCenter(g2d);
+      
         //Now paint the bezel
         paintBezel(g2d);
             
