@@ -33,6 +33,18 @@ Navigate to the "target" directory
 
 Only the Java JRE 1.8 is required.  No other dependencies are needed.
 
+## Artifact
+
+Include in your project with maven
+
+```
+<dependency>
+  <groupId>com.github.kkieffer</groupId>
+  <artifactId>jCircularGauges</artifactId>
+  <version>2.0.1</version>
+</dependency>
+```
+
 ## Demo
 
 Demo classes are available in the test package
