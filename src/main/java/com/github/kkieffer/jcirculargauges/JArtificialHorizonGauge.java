@@ -114,7 +114,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
    
     @Override
     public void paint(Graphics g) {
-             
+              
         //Because of rounding effects with integers, we need to extend the inside radius a bit, to the middle
         //of the gauge ring.  This will hide corner artifacts of the summing of the arc and triangles
         double insideRadius = outsideRadius * 0.99;  //inside radius to use for drawing
