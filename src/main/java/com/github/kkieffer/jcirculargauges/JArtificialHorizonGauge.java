@@ -123,7 +123,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         //General graphics setup
         Graphics2D g2d = (Graphics2D)g;        
         setupForPaint(g2d);
-
+ 
                 
         //If pitching down (horizon goes up), the draw the ground first, otherwise dry the sky
         g2d.setColor(translate > 0 ? groundColor : skyColor);
