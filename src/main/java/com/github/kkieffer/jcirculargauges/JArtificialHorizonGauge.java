@@ -111,7 +111,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     
 
     
-    
+   
     @Override
     public void paint(Graphics g) {
              
