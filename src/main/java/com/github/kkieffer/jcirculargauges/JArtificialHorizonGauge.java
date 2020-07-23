@@ -119,7 +119,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         //of the gauge ring.  This will hide corner artifacts of the summing of the arc and triangles
         double insideRadius = outsideRadius * 0.99;  //inside radius to use for drawing
         double translate = insideRadius * translateFactor;  //how far to translate the horizon vertically, negative is down, positive is up
-        
+       
         //General graphics setup
         Graphics2D g2d = (Graphics2D)g;        
         setupForPaint(g2d);
