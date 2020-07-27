@@ -22,6 +22,7 @@ import java.awt.BasicStroke;
 import static java.awt.BasicStroke.CAP_SQUARE;
 import static java.awt.BasicStroke.JOIN_MITER;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -276,9 +277,17 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         
         completePaint(g2d);
         
-        //EDITS
-        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);
-        //-226
+        //Edit: Add compass
+        
+        //center the compass
+        Dimension size = this.getSize();
+        g2d.translate(size.width/2, size.height/2);  
+               
+        centerGaugeTransform = g2d.getTransform();
+        g2d.setTransform(centerGaugeTransform);//centerDialTransform);
+        
+        //implement the compass (yaw)
+        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale) - 75; //-75 to move it into the black circle
         int majorTickIncrement;
         if (outsideRadius < 75)
             majorTickIncrement = 90;
@@ -297,11 +306,12 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                 
                 int lineStart;
                 if (thickerCardinalLine) {
-                    lineStart = indicatorRadius + tickLength; //double for N, W, E, S
+                	//+40 to elongate the thicker lines
+                    lineStart = indicatorRadius + tickLength + 40; //double for N, W, E, S
                     g2d.setStroke(new BasicStroke(4));  //thicker line
                 }
                 else {
-                    lineStart = indicatorRadius;
+                    lineStart = indicatorRadius - 75;
                     g2d.setStroke(new BasicStroke(1));  //normal line
                 }
                 Font origFont = g2d.getFont();
@@ -311,31 +321,31 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                 
                 switch (i) {
                     case 0:
-                        drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength);
+                        drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength+35); //+35 to move the letter
                         break;
                     case 90:
-                        drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength);
+                        drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength+35);
                         break;
                     case 180:
-                        drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength);
+                        drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength+35);
                         break;
                     case 270:
-                        drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength);
+                        drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength+35);
                         break;
                     default:
-                        lineStart = indicatorRadius;
+                        lineStart = indicatorRadius-15; //-15 to move the major tick marks further back
                         g2d.setFont(origFont);
                         g2d.setStroke(new BasicStroke(1));  //normal thin line
                         break;
                 }
 
-                g2d.drawLine(0, lineStart, 0, (int)-realInsideRadius);
+                g2d.drawLine(0, lineStart, 0, (int)-realInsideRadius - 25); //-20 to shorten the major tick marks
                 g2d.setStroke(new BasicStroke(1));  
                 g2d.setFont(origFont);
 
             }
             else if (outsideRadius > 250) //draw minor tick, if large enough
-                g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
+                g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius-35);  //-30 to shorten the minor tick marks      
            
             g2d.rotate(Math.toRadians(5.0));
         }
