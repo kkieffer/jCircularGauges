@@ -73,7 +73,7 @@ public class JCircularGauge extends JComponent {
     
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(300, 300);
+        return new Dimension(600, 600);
     }
  
         
@@ -91,7 +91,7 @@ public class JCircularGauge extends JComponent {
     //Paint the rim of the gauge (assumes translated to center of dial)    
     protected void paintBezel(Graphics2D g) {
     
-        int r = getOutsideRadius();
+        int r = getOutsideRadius() + 75;
         Color[] colors = {new Color(0,0,0,0), new Color(0,0,0,0), bezelColor, Color.WHITE, bezelColor};
         
         RadialGradientPaint rgp = new RadialGradientPaint(new Point2D.Double(0,0), r, dist, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE);
@@ -122,7 +122,6 @@ public class JCircularGauge extends JComponent {
          
         outsideRadius = getOutsideRadius();  //absolute outside radius which includes bezel
         realInsideRadius = outsideRadius * dist[2];   //the actual inside radius of the bezel
-        
      
         Graphics2D g2d = (Graphics2D)g;        
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

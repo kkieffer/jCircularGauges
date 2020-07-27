@@ -22,10 +22,12 @@ import java.awt.BasicStroke;
 import static java.awt.BasicStroke.CAP_SQUARE;
 import static java.awt.BasicStroke.JOIN_MITER;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 
 /**
  * This is an artifical horizon gauge, also known as an attitude gauge / gyro horizon.  These are typically seen in aircraft.
@@ -64,6 +66,13 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     private Color groundColor;
     private Color skyColor;
     private Color indicatorColor;
+    
+    
+    //jcompass
+    private boolean northUp;
+    private double bearing;
+    protected boolean thickerCardinalLine = true;
+    protected double tickScale = 0.1;  //fraction of the inside radius for the length of the tick
 
     /**
      * Create the JArtificialHorizon gauge with default parameters
@@ -110,7 +119,10 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     }
     
 
-    
+    protected void drawCardinalLetter(Graphics2D g2d, String letter, int yOffset) {
+        Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(letter, g2d);
+        g2d.drawString(letter, (int)-stringBounds.getCenterX(), yOffset + (int)stringBounds.getMaxY());
+    }
    
     @Override
     public void paint(Graphics g) {
@@ -123,8 +135,11 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         //General graphics setup
         Graphics2D g2d = (Graphics2D)g;        
         setupForPaint(g2d);
- 
-                
+        
+        //Edit: add black compass background
+        g2d.setColor(Color.BLACK);
+        g2d.fillOval((int)-insideRadius - 50, (int)-insideRadius - 50, (int)insideRadius*2 + 100, (int)insideRadius*2 + 100);
+        
         //If pitching down (horizon goes up), the draw the ground first, otherwise dry the sky
         g2d.setColor(translate > 0 ? groundColor : skyColor);
        
@@ -260,7 +275,86 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         
         
         completePaint(g2d);
+        
+        //EDITS
+        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);
+        //-226
+        int majorTickIncrement;
+        if (outsideRadius < 75)
+            majorTickIncrement = 90;
+        else if (outsideRadius < 150)
+            majorTickIncrement = 30;
+        else if (outsideRadius < 200)
+            majorTickIncrement = 15;
+        else
+            majorTickIncrement = 10;
 
+        //Draw the indicators and labels
+        for (int i=0; i<360; i+=5) {
+            
+            if ((i % majorTickIncrement) == 0) {  //major tick
+                g2d.drawString(String.valueOf(i), 2, indicatorRadius);
+                
+                int lineStart;
+                if (thickerCardinalLine) {
+                    lineStart = indicatorRadius + tickLength; //double for N, W, E, S
+                    g2d.setStroke(new BasicStroke(4));  //thicker line
+                }
+                else {
+                    lineStart = indicatorRadius;
+                    g2d.setStroke(new BasicStroke(1));  //normal line
+                }
+                Font origFont = g2d.getFont();
+                Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
+                g2d.setFont(largeFont);
+                
+                
+                switch (i) {
+                    case 0:
+                        drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength);
+                        break;
+                    case 90:
+                        drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength);
+                        break;
+                    case 180:
+                        drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength);
+                        break;
+                    case 270:
+                        drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength);
+                        break;
+                    default:
+                        lineStart = indicatorRadius;
+                        g2d.setFont(origFont);
+                        g2d.setStroke(new BasicStroke(1));  //normal thin line
+                        break;
+                }
+
+                g2d.drawLine(0, lineStart, 0, (int)-realInsideRadius);
+                g2d.setStroke(new BasicStroke(1));  
+                g2d.setFont(origFont);
+
+            }
+            else if (outsideRadius > 250) //draw minor tick, if large enough
+                g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
+           
+            g2d.rotate(Math.toRadians(5.0));
+        }
+        
+         if (northUp && Double.isFinite(bearing))
+            g2d.rotate(bearing);
+        
+        g2d.setStroke(new BasicStroke(2.0f));
+        
+        //Restore to origin
+        g2d.setTransform(centerGaugeTransform);
+        
+        //Restore to origin
+        g2d.setTransform(centerGaugeTransform);
+        
+   
+        //Draw Center of dial
+        drawDialCenter(g2d);
+        completePaint(g2d);
         
     }
     
