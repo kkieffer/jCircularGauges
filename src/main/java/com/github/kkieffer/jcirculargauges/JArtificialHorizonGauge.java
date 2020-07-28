@@ -76,7 +76,9 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     private double bearing;
     protected boolean thickerCardinalLine = true;
     protected double tickScale = 0.1;  //fraction of the inside radius for the length of the tick
-
+   
+    
+    
     /**
      * Create the JArtificialHorizon gauge with default parameters
      */
@@ -138,11 +140,12 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     }
    
     @Override
-    public void paint(Graphics g) {
-              
+    public void paint(Graphics g) {        
+    	double bezelBuffer = 80; // width of black radius between bezel and roll/pitch/yaw indicator (used to display compass heading
+
         //Because of rounding effects with integers, we need to extend the inside radius a bit, to the middle
         //of the gauge ring.  This will hide corner artifacts of the summing of the arc and triangles
-        double insideRadius = outsideRadius * 0.99;  //inside radius to use for drawing
+    	double insideRadius = (realInsideRadius - bezelBuffer );  //inside radius to use for drawing
         double translate = insideRadius * translateFactor;  //how far to translate the horizon vertically, negative is down, positive is up
        
         //General graphics setup
@@ -255,7 +258,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
 
         }
         
-        int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0);
+        int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
         int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
         
         //Draw the roll indicator arrow
@@ -302,7 +305,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         g2d.setTransform(centerGaugeTransform);//centerDialTransform);
         
         //implement the compass (yaw)
-        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale - 75);// (realInsideRadius/3.5)); //-75 to move it into the black circle. 
+        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);// (realInsideRadius/3.5)); //-75 to move it into the black circle. 
         int majorTickIncrement;
         if (outsideRadius < 75)
             majorTickIncrement = 90;
