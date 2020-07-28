@@ -151,7 +151,8 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         
         //Edit: add black compass background
         g2d.setColor(Color.BLACK);
-        g2d.fillOval((int)-insideRadius - 50, (int)-insideRadius - 50, (int)insideRadius*2 + 100, (int)insideRadius*2 + 100);
+        //g2d.fillOval((int)-insideRadius - 50, (int)-insideRadius - 50, (int)insideRadius*2 + 100, (int)insideRadius*2 + 100);
+        g2d.fillOval((int)-outsideRadius, (int)-outsideRadius, (int)outsideRadius*2, (int)outsideRadius*2);
         
         //If pitching down (horizon goes up), the draw the ground first, otherwise dry the sky
         g2d.setColor(translate > 0 ? groundColor : skyColor);
