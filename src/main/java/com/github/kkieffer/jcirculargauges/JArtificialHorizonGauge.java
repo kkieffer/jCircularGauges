@@ -18,16 +18,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 package com.github.kkieffer.jcirculargauges;
 
-import java.awt.BasicStroke;
 import static java.awt.BasicStroke.CAP_SQUARE;
 import static java.awt.BasicStroke.JOIN_MITER;
+
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
 /**
@@ -54,8 +54,8 @@ import java.awt.geom.Rectangle2D;
  * @author kkieffer
  */
 public class JArtificialHorizonGauge extends JCircularGauge {
-    
-    private static final Color BROWN = new Color(160, 90, 70);  //default ground
+    private static final long serialVersionUID = -7690241755303029242L;
+	private static final Color BROWN = new Color(160, 90, 70);  //default ground
     private static final Color BLUE = new Color(175, 225, 255); //default sky
     
     private static final double DEFAULT_PITCH_SENSITIVITY = 1.0;  //default sensitivity
@@ -67,7 +67,9 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     private Color groundColor;
     private Color skyColor;
     private Color indicatorColor;
-    
+
+    protected int yawRadius;
+    protected int rollPitchRadius;
     
     //jcompass
     private double course;
@@ -135,7 +137,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     }
     
 
-    protected void drawCardinalLetter(Graphics2D g2d, String letter, int yOffset) {
+    protected static void drawCardinalLetter(Graphics2D g2d, String letter, int yOffset) {
         Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(letter, g2d);
         g2d.drawString(letter, (int)-stringBounds.getCenterX(), yOffset + (int)stringBounds.getMaxY());
     }
@@ -151,7 +153,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
        //Fill the gauge the background (sky or ground)
        g2d.fillOval((int)-backgroundRadius, (int)-backgroundRadius, (int)backgroundRadius*2, (int)backgroundRadius*2);
            
-       AffineTransform centerDialTransform = g2d.getTransform();
+       //AffineTransform centerDialTransform = g2d.getTransform();
 
        if (Math.abs(translate) <= backgroundRadius) {
        
@@ -225,7 +227,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
            g2d.rotate(angle);  //just rotate through the roll angle
        }
    }
-   private void drawPitchRollLabels(Graphics2D g2d, double insideRadius) {
+   private void drawPitchRollLabels(Graphics2D g2d, double radius) {
 
        //Draw the pitch lines and labels      
        g2d.setColor(indicatorColor);
@@ -235,9 +237,9 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                g2d.setStroke(new BasicStroke(4));  //thicker zero line
            else
                g2d.setStroke(new BasicStroke(1));
-           y = (int)Math.round(i * insideRadius * pitchSensitivity / 90.0);
+           y = (int)Math.round(i * radius * pitchSensitivity / 90.0);
            
-           int width = (int)(insideRadius/4);
+           int width = (int)(radius/4);
            if ((i % 10) != 0) //smaller minor ticks
                width /= 2;
            else
@@ -248,8 +250,9 @@ public class JArtificialHorizonGauge extends JCircularGauge {
 
        }
        
-       int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
-       int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
+       //int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
+       int rollIndicatorRadius = (int)(-radius + radius/10);// + radius/10.0 + bezelBuffer) ;
+       int tickLength = (int)(radius + rollIndicatorRadius);
        
        //Draw the roll indicator arrow
        g2d.drawLine(0, 0, 0, rollIndicatorRadius);
@@ -265,10 +268,10 @@ public class JArtificialHorizonGauge extends JCircularGauge {
            
            if ((i % 10) == 0) {  //major tick
                g2d.drawString(String.valueOf(i), 2, rollIndicatorRadius);
-               g2d.drawLine(0, rollIndicatorRadius, 0, (int)-realInsideRadius);         
+               g2d.drawLine(0, rollIndicatorRadius, 0, (int)-radius);         
            }
            else if (outsideRadius > 250) //draw minor tick, if large enough
-               g2d.drawLine(0, rollIndicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
+               g2d.drawLine(0, rollIndicatorRadius - tickLength/2, 0, (int)-radius);         
           
            g2d.rotate(Math.toRadians(5.0));
        }
@@ -280,10 +283,10 @@ public class JArtificialHorizonGauge extends JCircularGauge {
        g2d.translate(size.width/2, size.height/2);  
        
        centerGaugeTransform = g2d.getTransform();
-       g2d.setTransform(centerGaugeTransform);//centerDialTransform);
+       g2d.setTransform(centerGaugeTransform);
        
        //implement the compass (yaw)
-       int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);// (realInsideRadius/3.5)); //-75 to move it into the black circle. 
+       int indicatorRadius = (int)(-yawRadius + yawRadius*tickScale);// (realInsideRadius/3.5)); //-75 to move it into the black circle. 
        int majorTickIncrement;
        if (outsideRadius < 75)
            majorTickIncrement = 90;
@@ -293,8 +296,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
            majorTickIncrement = 15;
        else
            majorTickIncrement = 10;
-//int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
-       int tickLength = (int)realInsideRadius;
+
        //Draw the indicators and labels
        for (int i=0; i<360; i+=5) {
            
@@ -304,7 +306,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                int lineStart;
                if (thickerCardinalLine) {
                	//-40 to elongate the thicker lines
-                   lineStart = indicatorRadius + tickLength - 40; //double for N, W, E, S
+                   lineStart = indicatorRadius + yawRadius - 40; //double for N, W, E, S
                    g2d.setStroke(new BasicStroke(4));  //thicker line
                }
                else {
@@ -315,19 +317,20 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
                g2d.setFont(largeFont);
                
+               int letterShift = 20; // to move the letters closer to the center
                
                switch (i) {
                   case 0:
-                       drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength - 10); //-5 to move the letter back
+                       drawCardinalLetter(g2d, "N", indicatorRadius + 2*yawRadius - letterShift); 
                        break;
                    case 90:
-                       drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength - 10);
+                       drawCardinalLetter(g2d, "E", indicatorRadius + 2*yawRadius - letterShift);
                        break;
                    case 180:
-                       drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength - 10);
+                       drawCardinalLetter(g2d, "S", indicatorRadius + 2*yawRadius - letterShift);
                        break;
                    case 270:
-                       drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength - 10);
+                       drawCardinalLetter(g2d, "W", indicatorRadius + 2*yawRadius - letterShift);
                        break;
                    default:
                        lineStart = indicatorRadius-15; //-15 to move the major tick marks further back
@@ -336,13 +339,13 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                        break;
                }
 
-               g2d.drawLine(0, lineStart, 0, (int)-realInsideRadius - 25); //-20 to shorten the major tick marks
+               g2d.drawLine(0, lineStart, 0, (int)-yawRadius ); //-20 to shorten the major tick marks
                g2d.setStroke(new BasicStroke(1));  
                g2d.setFont(origFont);
 
            }
            else if (outsideRadius > 250) //draw minor tick, if large enough
-               g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius-35);  //-30 to shorten the minor tick marks      
+               g2d.drawLine(0, indicatorRadius, 0, (int)-yawRadius);    
           
            g2d.rotate(Math.toRadians(5.0));
        }
@@ -362,25 +365,32 @@ public class JArtificialHorizonGauge extends JCircularGauge {
        g2d.rotate(course);
 
        g2d.setColor(courseNeedleColor); 
-       // TODO remove these vars
-       int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
-       int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
-       int compassRadius = rollIndicatorRadius;
-       //changed from *2/3 to *3/4
-       drawCourseNeedle(g2d, compassRadius*3/4, tickLength);
+       drawCourseNeedle(g2d, -(int)yawRadius);
+   }
+   
+   private static void drawCourseNeedle(Graphics2D g2d, int radius) {
+       int arrowSize = 30;
+       g2d.drawLine(0, 0, 0, radius+arrowSize/2 /*- 70*/); //-70 to elongate the arrow
+       int shift = 0;// increase to move the arrowhead up
+       g2d.fillPolygon(new int[]{0, -arrowSize/2, arrowSize/2},
+                  new int[]{radius-shift, radius+arrowSize-shift, radius+arrowSize-shift}, 
+                  3);
 
    }
+   
     @Override
     public void paint(Graphics g) {        
-    	
-        //Because of rounding effects with integers, we need to extend the inside radius a bit, to the middle
-        //of the gauge ring.  This will hide corner artifacts of the summing of the arc and triangles
-    	double insideRadius = (realInsideRadius - bezelBuffer );  //inside radius to use for drawing
-        double translate = insideRadius * translateFactor;  //how far to translate the horizon vertically, negative is down, positive is up
-       
+
         //General graphics setup
         Graphics2D g2d = (Graphics2D)g;        
         setupForPaint(g2d);
+        yawRadius = (int)realInsideRadius;
+        
+        //Because of rounding effects with integers, we need to extend the inside radius a bit, to the middle
+        //of the gauge ring.  This will hide corner artifacts of the summing of the arc and triangles
+    	double insideRadius = (yawRadius - bezelBuffer );  //inside radius to use for drawing
+        double translate = insideRadius * translateFactor;  //how far to translate the horizon vertically, negative is down, positive is up
+       
 
         drawBackground(g2d, insideRadius, translate);
         drawPitchRollLabels(g2d, insideRadius);
@@ -392,15 +402,12 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         drawBezel(g2d);
         
         completePaint(g2d);
+        
+        //Edit: Add compass
         drawCompassLabels(g2d);
         //Restore to origin
         g2d.setTransform(centerGaugeTransform);
      	drawCompassArrow(g2d);
-        //Edit: Add compass
-        
-        //TODO: resize the whole thing to fit the window, change the sizing factors so it's not hard-coded
-        
-        
         //Restore to origin
         g2d.setTransform(centerGaugeTransform);
         
@@ -423,16 +430,6 @@ public class JArtificialHorizonGauge extends JCircularGauge {
             c = 360 - c;
         course = Math.toRadians(c);
         repaint();
-    }
-    
-    
-    private void drawCourseNeedle(Graphics2D g2d, int radius, int tickLen) {
-       
-        g2d.drawLine(0, 0, 0, radius+tickLen/2 - 70); //-70 to elongate the arrow
-        g2d.fillPolygon(new int[]{0, -tickLen/2, tickLen/2},
-                   new int[]{radius-60, radius+tickLen-60, radius+tickLen-60}, //-60 to move the arrowhead up
-                   3);
- 
     }
     
     

@@ -119,10 +119,10 @@ public class JCircularGauge extends JComponent {
     }
     
     protected void setupForPaint(Graphics2D g) {
-         
+
         outsideRadius = getOutsideRadius();  //absolute outside radius which includes bezel
         realInsideRadius = outsideRadius * dist[2];   //the actual inside radius of the bezel
-     
+    	
         Graphics2D g2d = (Graphics2D)g;        
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
