@@ -89,7 +89,7 @@ public class JCircularGauge extends JComponent {
    
     
     //Paint the rim of the gauge (assumes translated to center of dial)    
-    protected void paintBezel(Graphics2D g) {
+    protected void drawBezel(Graphics2D g) {
     
         int r = getOutsideRadius(); //*1.25
         Color[] colors = {new Color(0,0,0,0), new Color(0,0,0,0), bezelColor, Color.WHITE, bezelColor};

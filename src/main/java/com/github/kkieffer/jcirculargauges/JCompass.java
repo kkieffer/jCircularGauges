@@ -295,7 +295,7 @@ public class JCompass extends JCircularGauge {
         drawDialCenter(g2d);
       
         //Now paint the bezel
-        paintBezel(g2d);
+        drawBezel(g2d);
             
         completePaint(g2d);
 

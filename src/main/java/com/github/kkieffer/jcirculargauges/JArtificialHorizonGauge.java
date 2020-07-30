@@ -76,7 +76,8 @@ public class JArtificialHorizonGauge extends JCircularGauge {
     private double bearing;
     protected boolean thickerCardinalLine = true;
     protected double tickScale = 0.1;  //fraction of the inside radius for the length of the tick
-   
+    double bezelBuffer = 80; // width of black radius between bezel and roll/pitch/yaw indicator (used to display compass heading
+    // TODO remove bezelBuffer
     
     
     /**
@@ -138,11 +139,240 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(letter, g2d);
         g2d.drawString(letter, (int)-stringBounds.getCenterX(), yOffset + (int)stringBounds.getMaxY());
     }
-   
+   private void drawBackground(Graphics2D g2d, double backgroundRadius, double translate) {
+       //Edit: add black compass background
+       g2d.setColor(Color.BLACK);
+       //g2d.fillOval((int)-insideRadius - 50, (int)-insideRadius - 50, (int)insideRadius*2 + 100, (int)insideRadius*2 + 100);
+       g2d.fillOval((int)-outsideRadius, (int)-outsideRadius, (int)outsideRadius*2, (int)outsideRadius*2);
+       
+       //If pitching down (horizon goes up), the draw the ground first, otherwise dry the sky
+       g2d.setColor(translate > 0 ? groundColor : skyColor);
+      
+       //Fill the gauge the background (sky or ground)
+       g2d.fillOval((int)-backgroundRadius, (int)-backgroundRadius, (int)backgroundRadius*2, (int)backgroundRadius*2);
+           
+       AffineTransform centerDialTransform = g2d.getTransform();
+
+       if (Math.abs(translate) <= backgroundRadius) {
+       
+           //Now switch to draw the other one
+           g2d.setColor(translate > 0 ? skyColor : groundColor);
+
+           //Value d is half the length of the new horizon.  If pitch is zero, then d == radius, otherwise d is smaller than radius
+           double d = Math.sqrt(Math.pow(backgroundRadius, 2) -  Math.pow(translate, 2));
+
+           //Theta is the angle from the line that intersects the origin and horizon at edge of the gauge, and the radius perpendicular to the horizon
+           int theta = (int)Math.toDegrees(Math.PI/2 - Math.asin(d/backgroundRadius));
+
+           //Now, draw an arc that stretches from the radius at one horizon intersection with gauge end, to the other
+           int arcstart;
+           int arclen;
+           if (translate > 0) {
+               arcstart = (int)Math.round(Math.toDegrees(-angle) + theta);
+               arclen = 180 - (2 * theta);               
+           } else {
+               arcstart = (int)Math.round(Math.toDegrees(-angle) - theta);
+               arclen = -180 + (2 * theta);
+           }
+
+           int r = (int)Math.round(backgroundRadius);
+           g2d.fillArc(-r, -r, r*2, r*2, arcstart, arclen);
+
+           //Once we've filled the space we are left with two right triangles to fill
+           //If pitching down, fill in the ground triangles, otherwise sky triangles
+           g2d.setColor(translate > 0 ? groundColor : skyColor);
+
+           //Rotate through the roll angle
+           g2d.rotate(angle);
+
+           //Now fill the two triangles. Normally, the triangles come to a point in the origin, but due to rounding effects, this
+           //has paint artifacts.  So by extending that point all the way to the gauge end, we can hide those while not affecting
+           //anything.  This is a difficult concept to explain but to illustrate this, you can change the color to something else
+           //to illustrate the triangles being drawn.
+           int t = (int)Math.round(translate);
+           int l = (int)Math.round(d);
+           int z = (int)backgroundRadius * (translate < 0 ? -1 : 1);
+           Polygon p = new Polygon(new int[]{0, -l, l}, new int[]{z, -t, -t},  3);
+           g2d.fillPolygon(p);
+
+
+           g2d.setColor(indicatorColor);
+
+           //Draw dashed perspective lines from the horizon to the origin
+           g2d.setStroke(new BasicStroke(1, CAP_SQUARE, JOIN_MITER, 10.0f, new float[]{5.0f}, 0.0f));
+           g2d.drawLine(0, 0, (int)(l*0.8), -t);
+           g2d.drawLine(0, 0, (int)(-l*0.8), -t);
+
+
+           //Draw dashed perspective lines on the ground
+           g2d.setStroke(new BasicStroke(2, CAP_SQUARE, JOIN_MITER, 10.0f, new float[]{8.0f}, 0.0f));
+           g2d.setColor(groundColor.darker());
+           g2d.translate(0, -translate);
+           //Perspective lines
+           for (int i=-20; i<0; i+=10) {
+
+               int px = (int)(-i*d/40 * Math.cos(Math.toRadians(i)));
+               int py = (int)(-i*d/40 * -Math.sin(Math.toRadians(i)));
+
+               g2d.drawLine(0, 0, px, py);
+               g2d.drawLine(0, 0, -px, py);
+
+           }
+           g2d.setStroke(new BasicStroke(1));
+           g2d.translate(0, translate);
+
+       } else {
+           g2d.rotate(angle);  //just rotate through the roll angle
+       }
+   }
+   private void drawPitchRollLabels(Graphics2D g2d, double insideRadius) {
+
+       //Draw the pitch lines and labels      
+       g2d.setColor(indicatorColor);
+       int y;
+       for (int i=-30; i<=30; i+= 5) {
+           if (i==0)
+               g2d.setStroke(new BasicStroke(4));  //thicker zero line
+           else
+               g2d.setStroke(new BasicStroke(1));
+           y = (int)Math.round(i * insideRadius * pitchSensitivity / 90.0);
+           
+           int width = (int)(insideRadius/4);
+           if ((i % 10) != 0) //smaller minor ticks
+               width /= 2;
+           else
+               g2d.drawString(String.valueOf(i), 3, y-2);  //label for major ticks
+
+           g2d.drawLine(width, y, -width, y);
+           
+
+       }
+       
+       int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
+       int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
+       
+       //Draw the roll indicator arrow
+       g2d.drawLine(0, 0, 0, rollIndicatorRadius);
+       g2d.fillPolygon(new int[]{0, -tickLength/4, tickLength/4},
+                  new int[]{rollIndicatorRadius, rollIndicatorRadius+tickLength/2, rollIndicatorRadius+tickLength/2},
+                  3);
+
+       //Back to no rotation    
+       g2d.setTransform(centerGaugeTransform);
+       //Draw the roll indicators and labels
+       g2d.rotate(Math.toRadians(-60));
+       for (int i=-60; i<=60; i+=5) {
+           
+           if ((i % 10) == 0) {  //major tick
+               g2d.drawString(String.valueOf(i), 2, rollIndicatorRadius);
+               g2d.drawLine(0, rollIndicatorRadius, 0, (int)-realInsideRadius);         
+           }
+           else if (outsideRadius > 250) //draw minor tick, if large enough
+               g2d.drawLine(0, rollIndicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
+          
+           g2d.rotate(Math.toRadians(5.0));
+       }
+   }
+   private void drawCompassLabels(Graphics2D g2d) {
+
+       //center the compass
+       Dimension size = this.getSize();
+       g2d.translate(size.width/2, size.height/2);  
+       
+       centerGaugeTransform = g2d.getTransform();
+       g2d.setTransform(centerGaugeTransform);//centerDialTransform);
+       
+       //implement the compass (yaw)
+       int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);// (realInsideRadius/3.5)); //-75 to move it into the black circle. 
+       int majorTickIncrement;
+       if (outsideRadius < 75)
+           majorTickIncrement = 90;
+       else if (outsideRadius < 150)
+           majorTickIncrement = 30;
+       else if (outsideRadius < 200)
+           majorTickIncrement = 15;
+       else
+           majorTickIncrement = 10;
+//int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
+       int tickLength = (int)realInsideRadius;
+       //Draw the indicators and labels
+       for (int i=0; i<360; i+=5) {
+           
+           if ((i % majorTickIncrement) == 0) {  //major tick
+               g2d.drawString(String.valueOf(i), 2, indicatorRadius+20);
+               
+               int lineStart;
+               if (thickerCardinalLine) {
+               	//-40 to elongate the thicker lines
+                   lineStart = indicatorRadius + tickLength - 40; //double for N, W, E, S
+                   g2d.setStroke(new BasicStroke(4));  //thicker line
+               }
+               else {
+                   lineStart = indicatorRadius - 75;
+                   g2d.setStroke(new BasicStroke(1));  //normal line
+               }
+               Font origFont = g2d.getFont();
+               Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
+               g2d.setFont(largeFont);
+               
+               
+               switch (i) {
+                  case 0:
+                       drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength - 10); //-5 to move the letter back
+                       break;
+                   case 90:
+                       drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength - 10);
+                       break;
+                   case 180:
+                       drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength - 10);
+                       break;
+                   case 270:
+                       drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength - 10);
+                       break;
+                   default:
+                       lineStart = indicatorRadius-15; //-15 to move the major tick marks further back
+                       g2d.setFont(origFont);
+                       g2d.setStroke(new BasicStroke(1));  //normal thin line
+                       break;
+               }
+
+               g2d.drawLine(0, lineStart, 0, (int)-realInsideRadius - 25); //-20 to shorten the major tick marks
+               g2d.setStroke(new BasicStroke(1));  
+               g2d.setFont(origFont);
+
+           }
+           else if (outsideRadius > 250) //draw minor tick, if large enough
+               g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius-35);  //-30 to shorten the minor tick marks      
+          
+           g2d.rotate(Math.toRadians(5.0));
+       }
+       
+        if (northUp && Double.isFinite(bearing))
+           g2d.rotate(bearing);
+       
+       g2d.setStroke(new BasicStroke(2.0f));
+       
+   }
+   private void drawCompassArrow(Graphics2D g2d) {
+
+       //rotates the red yaw arrow
+       if (!northUp)
+           g2d.rotate(-bearing);
+
+       g2d.rotate(course);
+
+       g2d.setColor(courseNeedleColor); 
+       // TODO remove these vars
+       int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
+       int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
+       int compassRadius = rollIndicatorRadius;
+       //changed from *2/3 to *3/4
+       drawCourseNeedle(g2d, compassRadius*3/4, tickLength);
+
+   }
     @Override
     public void paint(Graphics g) {        
-    	double bezelBuffer = 80; // width of black radius between bezel and roll/pitch/yaw indicator (used to display compass heading
-
+    	
         //Because of rounding effects with integers, we need to extend the inside radius a bit, to the middle
         //of the gauge ring.  This will hide corner artifacts of the summing of the arc and triangles
     	double insideRadius = (realInsideRadius - bezelBuffer );  //inside radius to use for drawing
@@ -151,246 +381,31 @@ public class JArtificialHorizonGauge extends JCircularGauge {
         //General graphics setup
         Graphics2D g2d = (Graphics2D)g;        
         setupForPaint(g2d);
+
+        drawBackground(g2d, insideRadius, translate);
+        drawPitchRollLabels(g2d, insideRadius);
         
-        //Edit: add black compass background
-        g2d.setColor(Color.BLACK);
-        //g2d.fillOval((int)-insideRadius - 50, (int)-insideRadius - 50, (int)insideRadius*2 + 100, (int)insideRadius*2 + 100);
-        g2d.fillOval((int)-outsideRadius, (int)-outsideRadius, (int)outsideRadius*2, (int)outsideRadius*2);
-        
-        //If pitching down (horizon goes up), the draw the ground first, otherwise dry the sky
-        g2d.setColor(translate > 0 ? groundColor : skyColor);
-       
-        //Fill the gauge the background (sky or ground)
-        g2d.fillOval((int)-insideRadius, (int)-insideRadius, (int)insideRadius*2, (int)insideRadius*2);
-            
-        AffineTransform centerDialTransform = g2d.getTransform();
-
-        if (Math.abs(translate) <= insideRadius) {
-        
-            //Now switch to draw the other one
-            g2d.setColor(translate > 0 ? skyColor : groundColor);
-
-            //Value d is half the length of the new horizon.  If pitch is zero, then d == radius, otherwise d is smaller than radius
-            double d = Math.sqrt(Math.pow(insideRadius, 2) -  Math.pow(translate, 2));
-
-            //Theta is the angle from the line that intersects the origin and horizon at edge of the gauge, and the radius perpendicular to the horizon
-            int theta = (int)Math.toDegrees(Math.PI/2 - Math.asin(d/insideRadius));
-
-            //Now, draw an arc that stretches from the radius at one horizon intersection with gauge end, to the other
-            int arcstart;
-            int arclen;
-            if (translate > 0) {
-                arcstart = (int)Math.round(Math.toDegrees(-angle) + theta);
-                arclen = 180 - (2 * theta);               
-            } else {
-                arcstart = (int)Math.round(Math.toDegrees(-angle) - theta);
-                arclen = -180 + (2 * theta);
-            }
-
-            int r = (int)Math.round(insideRadius);
-            g2d.fillArc(-r, -r, r*2, r*2, arcstart, arclen);
-
-            //Once we've filled the space we are left with two right triangles to fill
-            //If pitching down, fill in the ground triangles, otherwise sky triangles
-            g2d.setColor(translate > 0 ? groundColor : skyColor);
-
-            //Rotate through the roll angle
-            g2d.rotate(angle);
-
-            //Now fill the two triangles. Normally, the triangles come to a point in the origin, but due to rounding effects, this
-            //has paint artifacts.  So by extending that point all the way to the gauge end, we can hide those while not affecting
-            //anything.  This is a difficult concept to explain but to illustrate this, you can change the color to something else
-            //to illustrate the triangles being drawn.
-            int t = (int)Math.round(translate);
-            int l = (int)Math.round(d);
-            int z = (int)insideRadius * (translate < 0 ? -1 : 1);
-            Polygon p = new Polygon(new int[]{0, -l, l}, new int[]{z, -t, -t},  3);
-            g2d.fillPolygon(p);
-
-
-            g2d.setColor(indicatorColor);
-
-            //Draw dashed perspective lines from the horizon to the origin
-            g2d.setStroke(new BasicStroke(1, CAP_SQUARE, JOIN_MITER, 10.0f, new float[]{5.0f}, 0.0f));
-            g2d.drawLine(0, 0, (int)(l*0.8), -t);
-            g2d.drawLine(0, 0, (int)(-l*0.8), -t);
-
-
-            //Draw dashed perspective lines on the ground
-            g2d.setStroke(new BasicStroke(2, CAP_SQUARE, JOIN_MITER, 10.0f, new float[]{8.0f}, 0.0f));
-            g2d.setColor(groundColor.darker());
-            g2d.translate(0, -translate);
-            //Perspective lines
-            for (int i=-20; i<0; i+=10) {
-
-                int px = (int)(-i*d/40 * Math.cos(Math.toRadians(i)));
-                int py = (int)(-i*d/40 * -Math.sin(Math.toRadians(i)));
-
-                g2d.drawLine(0, 0, px, py);
-                g2d.drawLine(0, 0, -px, py);
-
-            }
-            g2d.setStroke(new BasicStroke(1));
-            g2d.translate(0, translate);
-
-        } else
-            g2d.rotate(angle);  //just rotate through the roll angle
-
-         
-        //Draw the pitch lines and labels      
-        g2d.setColor(indicatorColor);
-        int y;
-        for (int i=-30; i<=30; i+= 5) {
-            if (i==0)
-                g2d.setStroke(new BasicStroke(4));  //thicker zero line
-            else
-                g2d.setStroke(new BasicStroke(1));
-            y = (int)Math.round(i * insideRadius * pitchSensitivity / 90.0);
-            
-            int width = (int)(insideRadius/4);
-            if ((i % 10) != 0) //smaller minor ticks
-                width /= 2;
-            else
-                g2d.drawString(String.valueOf(i), 3, y-2);  //label for major ticks
-
-            g2d.drawLine(width, y, -width, y);
-            
-
-        }
-        
-        int rollIndicatorRadius = (int)(-realInsideRadius + realInsideRadius/10.0 + bezelBuffer) ;
-        int tickLength = (int)(realInsideRadius + rollIndicatorRadius);
-        
-        //Draw the roll indicator arrow
-        g2d.drawLine(0, 0, 0, rollIndicatorRadius);
-        g2d.fillPolygon(new int[]{0, -tickLength/4, tickLength/4},
-                   new int[]{rollIndicatorRadius, rollIndicatorRadius+tickLength/2, rollIndicatorRadius+tickLength/2},
-                   3);
-            
-        //Back to no rotation    
-        g2d.setTransform(centerDialTransform);
-        
-        //Draw the roll indicators and labels
-        g2d.rotate(Math.toRadians(-60));
-        for (int i=-60; i<=60; i+=5) {
-            
-            if ((i % 10) == 0) {  //major tick
-                g2d.drawString(String.valueOf(i), 2, rollIndicatorRadius);
-                g2d.drawLine(0, rollIndicatorRadius, 0, (int)-realInsideRadius);         
-            }
-            else if (outsideRadius > 250) //draw minor tick, if large enough
-                g2d.drawLine(0, rollIndicatorRadius - tickLength/2, 0, (int)-realInsideRadius);         
-           
-            g2d.rotate(Math.toRadians(5.0));
-        }
-
         //Restore to origin
-        g2d.setTransform(centerDialTransform);
+        g2d.setTransform(centerGaugeTransform);
                 
         //Now paint the bezel
-        paintBezel(g2d);
-        
+        drawBezel(g2d);
         
         completePaint(g2d);
-        
+        drawCompassLabels(g2d);
+        //Restore to origin
+        g2d.setTransform(centerGaugeTransform);
+     	drawCompassArrow(g2d);
         //Edit: Add compass
         
         //TODO: resize the whole thing to fit the window, change the sizing factors so it's not hard-coded
         
-        //center the compass
-        Dimension size = this.getSize();
-        g2d.translate(size.width/2, size.height/2);  
-        
-        centerGaugeTransform = g2d.getTransform();
-        g2d.setTransform(centerGaugeTransform);//centerDialTransform);
-        
-        //implement the compass (yaw)
-        int indicatorRadius = (int)(-realInsideRadius + realInsideRadius*tickScale);// (realInsideRadius/3.5)); //-75 to move it into the black circle. 
-        int majorTickIncrement;
-        if (outsideRadius < 75)
-            majorTickIncrement = 90;
-        else if (outsideRadius < 150)
-            majorTickIncrement = 30;
-        else if (outsideRadius < 200)
-            majorTickIncrement = 15;
-        else
-            majorTickIncrement = 10;
-
-        //Draw the indicators and labels
-        for (int i=0; i<360; i+=5) {
-            
-            if ((i % majorTickIncrement) == 0) {  //major tick
-                g2d.drawString(String.valueOf(i), 2, indicatorRadius+20);
-                
-                int lineStart;
-                if (thickerCardinalLine) {
-                	//-40 to elongate the thicker lines
-                    lineStart = indicatorRadius + tickLength - 40; //double for N, W, E, S
-                    g2d.setStroke(new BasicStroke(4));  //thicker line
-                }
-                else {
-                    lineStart = indicatorRadius - 75;
-                    g2d.setStroke(new BasicStroke(1));  //normal line
-                }
-                Font origFont = g2d.getFont();
-                Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
-                g2d.setFont(largeFont);
-                
-                
-                switch (i) {
-                   case 0:
-                        drawCardinalLetter(g2d, "N", indicatorRadius + 2*tickLength - 10); //-5 to move the letter back
-                        break;
-                    case 90:
-                        drawCardinalLetter(g2d, "E", indicatorRadius + 2*tickLength - 10);
-                        break;
-                    case 180:
-                        drawCardinalLetter(g2d, "S", indicatorRadius + 2*tickLength - 10);
-                        break;
-                    case 270:
-                        drawCardinalLetter(g2d, "W", indicatorRadius + 2*tickLength - 10);
-                        break;
-                    default:
-                        lineStart = indicatorRadius-15; //-15 to move the major tick marks further back
-                        g2d.setFont(origFont);
-                        g2d.setStroke(new BasicStroke(1));  //normal thin line
-                        break;
-                }
-
-                g2d.drawLine(0, lineStart, 0, (int)-realInsideRadius - 25); //-20 to shorten the major tick marks
-                g2d.setStroke(new BasicStroke(1));  
-                g2d.setFont(origFont);
-
-            }
-            else if (outsideRadius > 250) //draw minor tick, if large enough
-                g2d.drawLine(0, indicatorRadius - tickLength/2, 0, (int)-realInsideRadius-35);  //-30 to shorten the minor tick marks      
-           
-            g2d.rotate(Math.toRadians(5.0));
-        }
-        
-         if (northUp && Double.isFinite(bearing))
-            g2d.rotate(bearing);
-        
-        g2d.setStroke(new BasicStroke(2.0f));
         
         //Restore to origin
         g2d.setTransform(centerGaugeTransform);
         
-        //rotates the red yaw arrow
-        if (!northUp)
-            g2d.rotate(-bearing);
-
-        g2d.rotate(course);
-
-        g2d.setColor(courseNeedleColor);
-        //changed from *2/3 to *3/4
-        drawCourseNeedle(g2d, indicatorRadius*3/4, tickLength);
-
         //Restore to origin
-        g2d.setTransform(centerGaugeTransform);
-        
-        //Restore to origin
-        g2d.setTransform(centerGaugeTransform);
+        //g2d.setTransform(centerGaugeTransform);
    
         //Draw Center of dial
         drawDialCenter(g2d);
