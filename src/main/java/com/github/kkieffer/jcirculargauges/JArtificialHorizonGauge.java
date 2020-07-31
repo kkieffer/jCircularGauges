@@ -305,8 +305,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                
                int lineStart;
                if (thickerCardinalLine) {
-               	//-40 to elongate the thicker lines
-                   lineStart = indicatorRadius + yawRadius - 40; //double for N, W, E, S
+                   lineStart = indicatorRadius; //double for N, W, E, S
                    g2d.setStroke(new BasicStroke(4));  //thicker line
                }
                else {
@@ -317,7 +316,7 @@ public class JArtificialHorizonGauge extends JCircularGauge {
                Font largeFont = origFont.deriveFont((float)origFont.getSize()*2);
                g2d.setFont(largeFont);
                
-               int letterShift = 20; // to move the letters closer to the center
+               int letterShift = 80; // to move the letters closer to the center
                
                switch (i) {
                   case 0:
@@ -365,7 +364,8 @@ public class JArtificialHorizonGauge extends JCircularGauge {
        g2d.rotate(course);
 
        g2d.setColor(courseNeedleColor); 
-       drawCourseNeedle(g2d, -(int)yawRadius);
+       //*0.85 to shorten the red arrow
+       drawCourseNeedle(g2d, -(int)(yawRadius*0.85));
    }
    
    private static void drawCourseNeedle(Graphics2D g2d, int radius) {
