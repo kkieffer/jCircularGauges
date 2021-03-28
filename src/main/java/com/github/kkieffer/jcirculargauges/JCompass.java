@@ -167,12 +167,32 @@ public class JCompass extends JCircularGauge {
         Font origFont = g2d.getFont();
         Font largeFont = origFont.deriveFont((float)origFont.getSize()*4);
         g2d.setFont(largeFont);
-        String label = Double.isFinite(bearing) ? String.valueOf((int)Math.round(Math.toDegrees(bearing))) : "?";
+        
+        double bearingDeg = Math.toDegrees(bearing);
+        int degrees = (int)Math.floor(bearingDeg);
+        int degreesTenths = (int)Math.abs(Math.round(10.0 * (bearingDeg - degrees)));
+        
+        if (degreesTenths >= 10) {
+            degrees++;
+            degreesTenths = 0;
+        }
+        
+        if (degrees >= 360)
+            degrees = 0;
+        
+        String label = Double.isFinite(bearing) ? String.valueOf(degrees) : "?";
         int fontWidth = g2d.getFontMetrics().stringWidth(label);
 
         g2d.translate((int)(realInsideRadius/3), (int)(realInsideRadius/3));
         g2d.drawString(label + "°", -fontWidth, 0);
          
+        Font smallFont = origFont.deriveFont((float)origFont.getSize()*1.5f);
+        g2d.setFont(smallFont);
+        fontWidth = g2d.getFontMetrics().stringWidth(".0");
+
+        g2d.translate(fontWidth, 0);
+        g2d.drawString("." + degreesTenths, 0, 0);
+
     }
     
     

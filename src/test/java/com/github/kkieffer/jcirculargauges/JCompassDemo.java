@@ -48,7 +48,7 @@ public class JCompassDemo {
         
         
         //Now, cycle the bearing
-        int b = 0;
+        float b = 356.0f;
         while (true) {
   
             final double bearing = b;
@@ -64,7 +64,7 @@ public class JCompassDemo {
             });            
             Thread.sleep(100);
 
-            b+=1.0;
+            b+=0.01;
             b = b % 360;
             
         }
